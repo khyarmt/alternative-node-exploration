@@ -1,0 +1,4 @@
+# data_generator
+data_generator/.env
+data_generator/__pycache__
+data_generator/utils/__pycache__
