@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import settings
 from utils import assign_sector_code
@@ -48,6 +49,7 @@ trades = (
     .drop(columns=["company_code"])
     .rename(columns={"sector_code": "seller_sector_code"})
 )
+print(trades.head())
 
 # aggregation
 # by sector
@@ -74,4 +76,49 @@ count_buying_sector[buying_sectors] = (
 count_buying_sector = count_buying_sector.rename(
     columns={column: f"buy_{column}" for column in buying_sectors}
 )
-print(count_buying_sector.head())
+
+count_selling_sector = (
+    trades[["seller_company_code", "buyer_sector_code", "buyer_company_code"]]
+    .pivot_table(
+        index="seller_company_code",
+        columns="buyer_sector_code",
+        aggfunc="count",
+    )
+    .reset_index()
+)
+count_selling_sector.columns = count_selling_sector.columns.droplevel(0)
+count_selling_sector.columns.name = None
+count_selling_sector = count_selling_sector.rename(
+    columns={"": "company_code"}
+)
+selling_sectors = [
+    sector
+    for sector in count_selling_sector.columns
+    if sector != "company_code"
+]
+count_selling_sector[selling_sectors] = (
+    count_selling_sector[selling_sectors].fillna(0).astype(int)
+)
+count_selling_sector = count_selling_sector.rename(
+    columns={column: f"sell_{column}" for column in selling_sectors}
+)
+print(count_selling_sector.head())
+
+count_sector = pd.merge(
+    count_buying_sector,
+    count_selling_sector,
+    left_on="company_code",
+    right_on="company_code",
+    how="outer",
+)
+count_columns = [column for column in count_sector if column != "company_code"]
+count_sector[count_columns] = count_sector[count_columns].fillna(0).astype(int)
+
+
+# by subsector
+
+
+# export
+export_dir = "data"
+os.mkdir(export_dir)
+count_sector.to_csv(f"{export_dir}/features_sector.csv", mode="w", index=False)
