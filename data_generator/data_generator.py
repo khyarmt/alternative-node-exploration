@@ -16,7 +16,6 @@ companies["subsector_code"] = companies["industry_code"].str[:2]
 companies["sector_code"] = companies["subsector_code"].apply(
     assign_sector_code
 )
-
 trades = pd.read_csv(
     f"{dataset_path}/trd/{yyyymm}",
     usecols=["発注側企業CD", "受注側企業CD"],
@@ -114,11 +113,9 @@ count_sector = pd.merge(
 count_columns = [column for column in count_sector if column != "company_code"]
 count_sector[count_columns] = count_sector[count_columns].fillna(0).astype(int)
 
-
 # by subsector
-
 
 # export
 export_dir = "data"
-os.mkdir(export_dir)
+os.makedirs(export_dir, exist_ok=True)
 count_sector.to_csv(f"{export_dir}/features_sector.csv", mode="w", index=False)
